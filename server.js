@@ -4,50 +4,39 @@ const cors = require("cors");
 const path = require("path");
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+
+/* WAJIB */
+const PORT = process.env.PORT;
 
 app.use(cors());
 app.use(express.json());
 
-/* ========= SERVE HTML LANGSUNG ========= */
 app.get("/", (req, res) => {
   res.sendFile(path.join(__dirname, "index.html"));
 });
 
-/* ========= MAIL CONFIG ========= */
 const transporter = nodemailer.createTransport({
   service: "gmail",
   auth: {
-    user: process.env.EMAIL_USER, // dari Render
-    pass: process.env.EMAIL_PASS  // App Password
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS
   }
 });
 
-/* ========= API SEND ========= */
 app.post("/send", async (req, res) => {
-  const { to, subject, message, count = 1, delay = 0 } = req.body;
+  const { to, subject, message } = req.body;
 
-  try {
-    for (let i = 0; i < count; i++) {
-      await transporter.sendMail({
-        from: process.env.EMAIL_USER,
-        to,
-        subject,
-        text: message
-      });
+  await transporter.sendMail({
+    from: process.env.EMAIL_USER,
+    to,
+    subject,
+    text: message
+  });
 
-      if (delay) {
-        await new Promise(r => setTimeout(r, delay * 1000));
-      }
-    }
-
-    res.json({ ok: true });
-  } catch (err) {
-    res.json({ ok: false, error: err.message });
-  }
+  res.json({ ok: true });
 });
 
-/* ========= START ========= */
+/* WAJIB LISTEN DI PORT RAILWAY */
 app.listen(PORT, () => {
-  console.log("Server running on port " + PORT);
+  console.log("RUNNING ON PORT " + PORT);
 });
