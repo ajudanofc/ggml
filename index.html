@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"/>
+    <title>Gmail Boommer tools</title>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; font-family:'Orbitron',sans-serif; }
+        video.bg { position:fixed; inset:0; width:100%; height:100%; object-fit:cover; z-index:-2; }
+        .overlay-bg { position:fixed; inset:0; background:rgba(0,0,0,.7); z-index:-1; }
+
+        body { min-height:100vh; display:flex; flex-direction:column; padding:18px 14px; color:white; }
+        .container { flex:1; width:100%; max-width:420px; margin:auto; display:flex; flex-direction:column; gap:14px; }
+        
+        .banner { width:100%; height:150px; overflow:hidden; border-radius:26px; box-shadow:0 0 25px rgba(255,0,255,.25); background:rgba(40,0,40,.7); }
+        .banner img { width:100%; height:100%; object-fit:cover; display:block; }
+
+        .form-wrapper { padding:20px; border-radius:18px; background:rgba(20,0,30,.9); box-shadow:0 0 25px rgba(255,0,255,.25); }
+        h1 { text-align:center; font-size:16px; margin-bottom:16px; color:#ff7bff; }
+        .form-group { margin-bottom:12px; }
+        label { font-size:12px; margin-bottom:5px; display:block; }
+        input, textarea { width:100%; padding:10px; border-radius:8px; border:1px solid #9333ea; background:#1b001b; color:white; font-size:13px; }
+        textarea { min-height:80px; }
+        button { width:100%; padding:12px; border:none; border-radius:10px; font-weight:bold; background:linear-gradient(45deg,#ff00ff,#7a00ff); color:white; cursor:pointer; margin-top:10px; }
+        
+        /* Overlay Loading */
+        #status-overlay {
+            display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); z-index: 100; flex-direction: column;
+            justify-content: center; align-items: center;
+        }
+        .progress-container { width: 80%; background: #333; height: 10px; border-radius: 5px; margin: 15px 0; overflow: hidden; }
+        #bar { width: 0%; height: 100%; background: #ff00ff; transition: 0.3s; }
+
+        footer { position:fixed; bottom:0; left:0; width:100%; height:40px; display:flex; align-items:center; justify-content:center; font-size:11px; background:rgba(20,0,30,.95); z-index:10; }
+        .topbar { position:fixed; top:0; left:0; width:100%; height:60px; background:rgba(20,0,30,.95); backdrop-filter:blur(8px); display:flex; align-items:center; justify-content:center; gap:10px; box-shadow:0 0 20px rgba(255,0,255,.25); z-index:10; }
+        .topbar img { width:28px; height:23px; }
+    </style>
+</head>
+<body>
+
+<video class="bg" autoplay muted loop playsinline>
+    <source src="https://files.catbox.moe/59y71x.mp4" type="video/mp4">
+</video>
+<div class="overlay-bg"></div>
+
+<div id="status-overlay">
+    <div id="spinner" style="font-size: 30px; margin-bottom: 10px;">⏳</div>
+    <div id="status-text">Mengirim...</div>
+    <div class="progress-container"><div id="bar"></div></div>
+    <button id="stopBtn" style="width: auto; padding: 5px 20px; background: red;">Batal</button>
+</div>
+
+<div class="topbar">
+    <img src="https://static.vecteezy.com/system/resources/previews/022/484/508/non_2x/google-mail-gmail-icon-logo-symbol-free-png.png">
+    <span>Gmail Boommer Tols</span>
+</div>
+
+<div class="container">
+    <br><br><br><br>
+    <div class="banner">
+        <img src="https://files.catbox.moe/dm98g1.jpg" alt="Banner">
+    </div>
+
+    <div class="form-wrapper">
+        <h1>Email all spammer</h1>
+        <form id="emailForm">
+            <div class="form-group">
+                <label>Nama Pengirim</label>
+                <input type="text" id="senderName" placeholder="Contoh: Admin" required>
+            </div>
+            <div class="form-group">
+                <label>Email Tujuan</label>
+                <input type="email" id="emailTo" placeholder="tujuan@mail.com" required>
+            </div>
+            <div class="form-group">
+                <label>Judul</label>
+                <input type="text" id="subject" placeholder="Subjek email" required>
+            </div>
+            <div class="form-group">
+                <label>Pesan</label>
+                <textarea id="message" placeholder="Isi pesan..." required></textarea>
+            </div>
+            <div class="form-group">
+                <label>Jumlah Kirim</label>
+                <input type="number" id="count" value="5" min="1">
+            </div>
+            <div class="form-group">
+                <label>Durasi jeda (detik)</label>
+                <input type="number" id="delay" value="2" min="1">
+            </div>
+            <button type="submit">Start landing</button>
+        </form>
+    </div>
+</div>
+<br><br><br>
+<footer>© 2026 Ajudan0fc</footer>
+
+<script>
+    const sleep = (ms) => new Promise(r => setTimeout(r, ms));
+
+    const emailForm = document.getElementById("emailForm");
+    const overlay = document.getElementById("status-overlay");
+    const bar = document.getElementById("bar");
+    const statusTxt = document.getElementById("status-text");
+    const stopBtn = document.getElementById("stopBtn");
+    const spinner = document.getElementById("spinner");
+
+    let stopped = false;
+
+    stopBtn.onclick = () => {
+        stopped = true;
+        overlay.style.display = "none";
+    };
+
+    emailForm.onsubmit = async (e) => {
+        e.preventDefault();
+        stopped = false;
+
+        // Ambil data dari input
+        const n = document.getElementById("senderName").value;
+        const t = document.getElementById("emailTo").value;
+        const s = document.getElementById("subject").value;
+        const m = document.getElementById("message").value;
+        const c = parseInt(document.getElementById("count").value);
+        const d = parseInt(document.getElementById("delay").value) * 1000;
+
+        // Tampilkan overlay
+        overlay.style.display = "flex";
+        bar.style.width = "0%";
+        statusTxt.innerText = "Memulai...";
+
+        for (let i = 1; i <= c; i++) {
+            if (stopped) break;
+
+            statusTxt.innerText = `Mengirim: ${i} dari ${c}`;
+            
+            try {
+                // Simulasi Fetch ke Backend (Ganti URL dengan backend aslimu nanti)
+                const response = await fetch("/send", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        to: t,
+                        subject: s,
+                        message: `Dari: ${n}\n\n${m}`
+                    })
+                });
+
+                // Jika error (karena localhost:3000 tidak ada), kita biarkan saja agar simulasi tetap jalan di browser
+            } catch (err) {
+                console.log("Backend belum aktif, simulasi berlanjut...");
+            }
+
+            // Update Progress Bar
+            bar.style.width = (i / c * 100) + "%";
+
+            // Tunggu delay
+            await sleep(d);
+        }
+
+        if (!stopped) {
+            statusTxt.innerText = "Selesai!";
+            spinner.innerText = "✅";
+            await sleep(2000);
+            overlay.style.display = "none";
+            spinner.innerText = "⏳"; // reset
+        }
+    };
+</script>
+
+</body>
+  </html>
+  
